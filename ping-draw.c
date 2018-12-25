@@ -169,7 +169,7 @@ static png_bytep *read_png(const char *fname)
 static void usage(char *cmd)
 {
 	char *slash = strrchr(cmd, '/');
-	fprintf(stderr, "Usage: %s [-x <x>] [-y <y>] <file.png>\n", slash ? ++slash : cmd);
+	fprintf(stderr, "Usage: %s [-x <x>] [-y <y>] [-f <fps>] <file.png>\n", slash ? ++slash : cmd);
 	exit(1);
 }
 
@@ -178,19 +178,23 @@ int main(int argc, char *argv[])
 	png_bytep *row_pointers;
 	png_byte *row, *ptr;
 	int csum, x, y, scan, c;
-	int offset_x, offset_y;
+	int offset_x, offset_y, fps;
 	struct tms dummy;
 	long int tps;
 	clock_t time;
 
 	offset_x = offset_y = 0;
-	while ((c = getopt(argc, argv, "x:y:h")) != -1) {
+	fps = FPS;
+	while ((c = getopt(argc, argv, "x:y:f:h")) != -1) {
 		switch (c) {
 		case 'x':
 			offset_x = atoi(optarg);
 			break;
 		case 'y':
 			offset_y = atoi(optarg);
+			break;
+		case 'f':
+			fps = atoi(optarg);
 			break;
 		case 'h':
 		case '?':
@@ -228,8 +232,8 @@ int main(int argc, char *argv[])
 			}
 		}
 		time = times(&dummy) - time;
-		if (time >= 0 && time < tps/FPS/SCAN) {
-			int delay = 1000000 * (tps/FPS/SCAN - time) / tps;
+		if (time >= 0 && time < tps/(fps*SCAN)) {
+			int delay = 1000000 * (tps/(fps*SCAN) - time) / tps;
 			usleep(delay);
 		}
 		if (++scan >= SCAN)
